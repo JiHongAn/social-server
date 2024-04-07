@@ -1,5 +1,5 @@
 import { IsEnum, IsNumber } from 'class-validator';
-import { RoomType } from '../enums/room-type.enum';
+import { RoomType } from '../../libs/enums/room-type.enum';
 
 export class CreateRoomDto {
   @IsEnum(RoomType)
