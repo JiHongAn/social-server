@@ -1,0 +1,31 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model rooms {
+  id          String    @id
+  type        String
+  title       String?
+  memberCount Int
+  updatedAt   String
+  createdAt   DateTime  @default(now())
+  members     members[]
+
+  @@index([updatedAt])
+  @@map("room")
+}
+
+model members {
+  userId     Int
+  roomId     String
+  lastChatId Int    @default(0)
+  rooms      rooms  @relation(fields: [roomId], references: [id])
+
+  @@id([userId, roomId])
+  @@map("member")
+}
