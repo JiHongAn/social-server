@@ -7,10 +7,14 @@ import { v4 as uuid } from 'uuid';
 import { errors } from '../../libs/errors';
 import { InviteMemberDto } from '../dtos/invite-member.dto';
 import { SuccessDto } from '../../libs/dtos/success.dto';
+import { CacheService } from '../../cache/services/cache.service';
 
 @Injectable()
 export class RoomsService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly cacheService: CacheService,
+  ) {}
 
   /**
    * Create Room
@@ -136,6 +140,52 @@ export class RoomsService {
       }
     });
     return { success: true };
+  }
+
+  /* 마지막으로 조회한 채팅 ID 업데이트 */
+  async updateMemberLastChatId(roomId: string, userId: number): Promise<void> {
+    const lastChatId = await this.getRoomLastChatId(roomId);
+
+    // 멤버가 읽은 마지막 채팅 ID 업데이트
+    await this.prismaService.members.updateMany({
+      where: { userId, roomId },
+      data: { lastChatId },
+    });
+  }
+
+  /* 채팅방의 마지막 Chat Id 조회 */
+  async getRoomLastChatId(roomId: string): Promise<number> {
+    // 캐싱된 lastChatId 리턴
+    const lastChatId = await this.cacheService.get(`chat:id:${roomId}`);
+    if (lastChatId) {
+      return +lastChatId;
+    }
+
+    // DB에서 조회
+    const room = await this.prismaService.rooms.findUnique({
+      where: { id: roomId },
+      select: { lastChatId: true },
+    });
+
+    // 캐싱
+    await this.cacheService.set(`chat:id:${roomId}`, room.lastChatId);
+    return room.lastChatId;
+  }
+
+  /* 멤버들의 user ID 목록 조회 */
+  async getMemberUserIds(roomId: string): Promise<string[]> {
+    // 캐싱된 member들의 user ID 목록 리턴
+    const memberUserIds = await this.cacheService.smembers(`members:${roomId}`);
+    if (memberUserIds.length > 0) {
+      return memberUserIds;
+    }
+
+    // DB에 저장된 member들의 userId 목록 리턴
+    const members = await this.prismaService.members.findMany({
+      where: { roomId },
+      select: { userId: true },
+    });
+    return members.map(({ userId }) => userId.toString());
   }
 
   /* Validate Member */

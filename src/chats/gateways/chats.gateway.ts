@@ -13,6 +13,7 @@ import { CacheService } from '../../cache/services/cache.service';
 import { PrismaService } from '../../prisma/services/prisma.service';
 import { ChatsService } from '../services/chats.service';
 import { addFcmSQS } from '../../libs/utils/sqs';
+import { RoomsService } from '../../rooms/services/rooms.service';
 
 @WebSocketGateway({
   namespace: 'chats',
@@ -24,6 +25,7 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly cacheService: CacheService,
     private readonly prismaService: PrismaService,
     private readonly chatsService: ChatsService,
+    private readonly roomsService: RoomsService,
   ) {}
 
   @WebSocketServer()
@@ -58,7 +60,7 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     // Room Id가 있다면
     if (roomId) {
-      await this.updateMemberLastChatId(roomId, user.id);
+      await this.roomsService.updateMemberLastChatId(roomId, user.id);
     }
 
     // Socket Id 삭제
@@ -77,7 +79,7 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     // 캐싱된 Chat Id가 없다면
     if (!chatId) {
-      await this.getRoomLastChatId(roomId);
+      await this.roomsService.getRoomLastChatId(roomId);
     }
 
     // Client Id 저장
@@ -98,7 +100,7 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const user = client.data.user;
 
     // 마지막 조회 채팅 ID 업데이트
-    await this.updateMemberLastChatId(roomId, user.id);
+    await this.roomsService.updateMemberLastChatId(roomId, user.id);
   }
 
   /**
@@ -133,7 +135,7 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
 
     // 채팅방 멤버 목록 조회
-    const members = await this.getMemberUserIds(roomId);
+    const members = await this.roomsService.getMemberUserIds(roomId);
 
     // 채팅방 멤버들에게 메시지 전송
     const promises = members.map(async (userId) => {
@@ -157,54 +159,5 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return addFcmSQS(JSON.stringify(messageData));
     });
     await Promise.allSettled(promises);
-  }
-
-  /* 마지막으로 조회한 채팅 ID 업데이트 */
-  private async updateMemberLastChatId(
-    roomId: string,
-    userId: number,
-  ): Promise<void> {
-    const lastChatId = await this.getRoomLastChatId(roomId);
-
-    // 멤버가 읽은 마지막 채팅 ID 업데이트
-    await this.prismaService.members.updateMany({
-      where: { userId, roomId },
-      data: { lastChatId },
-    });
-  }
-
-  /* 채팅방의 마지막 Chat Id 조회 */
-  private async getRoomLastChatId(roomId: string): Promise<number> {
-    // 캐싱된 lastChatId 리턴
-    const lastChatId = await this.cacheService.get(`chat:id:${roomId}`);
-    if (lastChatId) {
-      return +lastChatId;
-    }
-
-    // DB에서 조회
-    const room = await this.prismaService.rooms.findUnique({
-      where: { id: roomId },
-      select: { lastChatId: true },
-    });
-
-    // 캐싱
-    await this.cacheService.set(`chat:id:${roomId}`, room.lastChatId);
-    return room.lastChatId;
-  }
-
-  /* 멤버들의 user ID 목록 조회 */
-  private async getMemberUserIds(roomId: string): Promise<string[]> {
-    // 캐싱된 member들의 user ID 목록 리턴
-    const memberUserIds = await this.cacheService.smembers(`members:${roomId}`);
-    if (memberUserIds.length > 0) {
-      return memberUserIds;
-    }
-
-    // DB에 저장된 member들의 userId 목록 리턴
-    const members = await this.prismaService.members.findMany({
-      where: { roomId },
-      select: { userId: true },
-    });
-    return members.map(({ userId }) => userId.toString());
   }
 }
