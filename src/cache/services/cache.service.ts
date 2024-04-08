@@ -24,4 +24,8 @@ export class CacheService {
   async del(key: string): Promise<number> {
     return this.redis.del(key);
   }
+
+  async smembers(key: string): Promise<string[]> {
+    return this.redis.smembers(key);
+  }
 }
