@@ -1,4 +1,11 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Param,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { MembersService } from '../services/members.service';
 import { JwtGuard } from '../../auth/guards/jwt.guard';
 import { GetUser } from '../../libs/decorators/get-user.decorator';
@@ -17,5 +24,13 @@ export class MembersController {
     @Body() params: InviteMemberDto,
   ): Promise<SuccessDto> {
     return this.membersService.inviteMember(user, params);
+  }
+
+  @Delete(':roomId')
+  async exitMember(
+    @GetUser() user: UserDto,
+    @Param('roomId') roomId: string,
+  ): Promise<SuccessDto> {
+    return this.membersService.exitMember(user, roomId);
   }
 }

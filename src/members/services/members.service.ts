@@ -31,6 +31,7 @@ export class MembersService {
 
     // 멤버 추가
     await this.prismaService.$transaction(async (prisma) => {
+      // 멤버 수 증가
       const { memberCount } = await prisma.rooms.update({
         where: { id: roomId },
         data: {
@@ -48,6 +49,47 @@ export class MembersService {
       await prisma.members.createMany({
         data: { roomId, userId: friendId },
       });
+    });
+    return { success: true };
+  }
+
+  /**
+   * Exit Member
+   */
+  async exitMember({ id }: UserDto, roomId: string): Promise<SuccessDto> {
+    // 멤버인지 체크
+    await this.validateMember(roomId, id);
+
+    // 그룹 채팅인지 체크
+    const room = await this.prismaService.rooms.findUnique({
+      where: { id: roomId },
+      select: { type: true, memberCount: true },
+    });
+    if (room.type !== RoomType.group) {
+      throw errors.InvalidRequest();
+    }
+
+    // 멤버 퇴장 트랜잭션
+    await this.prismaService.$transaction(async (prisma) => {
+      // 멤버 수 감소
+      const { memberCount } = await prisma.rooms.update({
+        where: { id: roomId },
+        data: {
+          memberCount: { decrement: 1 },
+        },
+        select: { memberCount: true },
+      });
+
+      // 멤버 정보 삭제
+      await prisma.members.deleteMany({
+        where: { userId: id, roomId },
+      });
+
+      if (memberCount === 0) {
+        await prisma.rooms.deleteMany({
+          where: { id: roomId },
+        });
+      }
     });
     return { success: true };
   }
