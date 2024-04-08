@@ -2,8 +2,10 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   Param,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { RoomsService } from '../services/rooms.service';
@@ -13,10 +15,21 @@ import { UserDto } from '../../libs/dtos/user.dto';
 import { CreateRoomDto, CreateRoomResponseDto } from '../dtos/create-room.dto';
 import { InviteMemberDto } from '../dtos/invite-member.dto';
 import { SuccessDto } from '../../libs/dtos/success.dto';
+import { PaginationDto } from '../../libs/dtos/pagination.dto';
+import { GetRoomDto, GetRoomResponseDto } from '../dtos/get-room.dto';
 
 @Controller('rooms')
 export class RoomsController {
   constructor(private readonly roomsService: RoomsService) {}
+
+  @Get()
+  @UseGuards(JwtGuard)
+  async getRooms(
+    @GetUser() user: UserDto,
+    @Query() params: GetRoomDto,
+  ): Promise<GetRoomResponseDto[]> {
+    return this.roomsService.getRooms(user, params);
+  }
 
   @Post()
   @UseGuards(JwtGuard)
