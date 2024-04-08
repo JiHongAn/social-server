@@ -3,6 +3,8 @@ import { ChatsService } from './services/chats.service';
 import { ChatsController } from './controllers/chats.controller';
 import { DynamooseModule } from 'nestjs-dynamoose';
 import { ChatEntity } from './entities/chat.entity';
+import { ChatsGateway } from './gateways/chats.gateway';
+import { AuthModule } from '../auth/auth.module';
 import { RoomsModule } from '../rooms/rooms.module';
 
 @Module({
@@ -14,9 +16,10 @@ import { RoomsModule } from '../rooms/rooms.module';
         options: { tableName: 'Chat' },
       },
     ]),
+    AuthModule,
     RoomsModule,
   ],
   controllers: [ChatsController],
-  providers: [ChatsService],
+  providers: [ChatsService, ChatsGateway],
 })
 export class ChatsModule {}

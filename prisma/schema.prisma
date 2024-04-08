@@ -11,6 +11,7 @@ model rooms {
   id          String    @id
   type        String
   title       String?
+  lastChatId  Int       @default(0)
   memberCount Int
   updatedAt   String
   createdAt   DateTime  @default(now())
