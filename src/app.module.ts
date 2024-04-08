@@ -6,9 +6,11 @@ import { RoomsModule } from './rooms/rooms.module';
 import { ChatsModule } from './chats/chats.module';
 import { MembersModule } from './members/members.module';
 import { CacheModule } from './cache/cache.module';
+import { DynamooseModule } from 'nestjs-dynamoose';
 
 @Module({
   imports: [
+    DynamooseModule.forRoot(),
     AuthModule,
     PrismaModule,
     RoomsModule,

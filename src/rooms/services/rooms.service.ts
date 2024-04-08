@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/services/prisma.service';
 import { UserDto } from '../../libs/dtos/user.dto';
 import { CreateRoomDto, CreateRoomResponseDto } from '../dtos/create-room.dto';
-import { RoomType } from '../enums/room-type.enum';
+import { RoomType } from '../../libs/enums/room-type.enum';
 import { v4 as uuid } from 'uuid';
 import { errors } from '../../libs/errors';
 
