@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ChatsService } from './services/chats.service';
 import { ChatsController } from './controllers/chats.controller';
-import { MembersModule } from '../members/members.module';
 import { DynamooseModule } from 'nestjs-dynamoose';
 import { ChatEntity } from './entities/chat.entity';
+import { RoomsModule } from '../rooms/rooms.module';
 
 @Module({
   imports: [
@@ -14,7 +14,7 @@ import { ChatEntity } from './entities/chat.entity';
         options: { tableName: 'Chat' },
       },
     ]),
-    MembersModule,
+    RoomsModule,
   ],
   controllers: [ChatsController],
   providers: [ChatsService],
