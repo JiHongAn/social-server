@@ -141,6 +141,7 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       // 메시지 데이터
       const messageData = {
+        roomId,
         userId: user.id,
         nickname: user.nickname,
         profileUrl: user.profileUrl,

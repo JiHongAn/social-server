@@ -36,7 +36,10 @@ export class RoomsService {
       },
       include: {
         members: {
-          where: { userId: id },
+          where: {
+            userId: { not: id },
+          },
+          take: 3,
         },
       },
       orderBy: { updatedAt: 'desc' },
@@ -46,26 +49,40 @@ export class RoomsService {
     });
 
     // 채팅방 ID 목록
+    const roomIds = rooms.map(({ id }) => id);
+
+    // 나의 멤버 정보
+    const myMembers = await this.prismaService.members.findMany({
+      where: {
+        userId: id,
+        roomId: { in: roomIds },
+      },
+    });
+
+    // 채팅방 ID 목록
     const lastChats = await this.chatsService.getLastChats(
       rooms.map(({ id }) => id),
     );
 
     // 마지막 메시지 조회
     return rooms.map((room) => {
-      const { message, createdAt } = lastChats.find(
-        ({ roomId }) => roomId === room.id,
-      );
+      // 마지막 전송된 메시지
+      const { message } = lastChats.find(({ roomId }) => {
+        return roomId === room.id;
+      });
 
-      // 읽지 않은 메시지 수
-      const unread = room.lastChatId - room.members[0].lastChatId;
-
+      // 나의 멤버 정보
+      const { lastChatId } = myMembers.find(({ roomId }) => {
+        return roomId === room.id;
+      });
       return {
         id: room.id,
         type: room.type,
         memberCount: room.memberCount,
         updatedAt: room.updatedAt,
-        unread,
-        lastMessage: { message, createdAt },
+        unread: room.lastChatId - lastChatId,
+        lastMessage: message,
+        memberUserIds: room.members.map(({ userId }) => userId),
       };
     });
   }

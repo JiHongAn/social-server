@@ -22,13 +22,22 @@ export class ChatsService {
     { roomId, limit, nextPageToken }: GetChatDto,
   ): Promise<GetChatResponseDto[]> {
     // 채팅 목록 조회
-    const query = this.chatModel.query('PK').eq(roomId).limit(limit);
+    const query = this.chatModel
+      .query('PK')
+      .eq(roomId)
+      .limit(limit)
+      .sort(SortOrder.descending);
 
     // Next Page Token이 있다면
     if (nextPageToken) {
       query.where('SK').lt(+nextPageToken);
     }
-    return query.exec();
+    const chats = await query.exec();
+    return chats
+      .map(({ userId, message, createdAt }) => {
+        return { userId, message, createdAt };
+      })
+      .reverse();
   }
 
   /* 채팅방 별 마지막 메시지 조회 */

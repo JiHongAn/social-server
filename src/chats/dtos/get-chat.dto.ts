@@ -6,4 +6,8 @@ export class GetChatDto extends PaginationDto {
   roomId: string;
 }
 
-export class GetChatResponseDto {}
+export class GetChatResponseDto {
+  userId: number;
+  message: string;
+  createdAt: Date;
+}
