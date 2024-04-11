@@ -6,12 +6,14 @@ import { Chat, ChatKey } from '../interfaces/chat.interface';
 import { CreateChatDto } from '../dtos/create-chat.dto';
 import { SortOrder } from 'dynamoose/dist/General';
 import { GetLastChatResponseDto } from '../dtos/get-last-chat.dto';
+import { MembersService } from '../../members/services/members.service';
 
 @Injectable()
 export class ChatsService {
   constructor(
     @InjectModel('Chat')
     private chatModel: Model<Chat, ChatKey>,
+    private readonly membersService: MembersService,
   ) {}
 
   /**
@@ -21,6 +23,9 @@ export class ChatsService {
     { id }: UserDto,
     { roomId, limit, nextPageToken }: GetChatDto,
   ): Promise<GetChatResponseDto[]> {
+    // 멤버 여부 체크
+    await this.membersService.validateMember(roomId, id);
+
     // 채팅 목록 조회
     const query = this.chatModel
       .query('PK')

@@ -1,5 +1,4 @@
-import { IsArray, IsEnum } from 'class-validator';
-import { RoomType } from '../../libs/enums/room-type.enum';
+import { IsArray } from 'class-validator';
 
 export class CreateRoomDto {
   @IsArray()

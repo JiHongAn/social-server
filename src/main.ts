@@ -3,6 +3,8 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { HttpExceptionFilter } from './libs/filters/http-exception.filter';
 import * as _cluster from 'cluster';
+import { RedisIoAdapter } from './libs/adapters/redis.adapter';
+
 const cluster = _cluster as unknown as _cluster.Cluster;
 import { cpus } from 'os';
 
@@ -15,6 +17,7 @@ async function bootstrap() {
   } else {
     // 서버 실행
     const app = await NestFactory.create(AppModule);
+    app.useWebSocketAdapter(new RedisIoAdapter(app));
 
     // Pipes
     app.useGlobalPipes(new ValidationPipe({ transform: true }));
@@ -30,4 +33,5 @@ async function bootstrap() {
     await app.listen(port);
   }
 }
+
 bootstrap();
