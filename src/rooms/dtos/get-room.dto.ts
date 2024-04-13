@@ -9,5 +9,5 @@ export class GetRoomResponseDto {
   updatedAt: string;
   unread: number;
   lastMessage: string;
-  memberUserIds: number[];
+  memberUserIds: string[];
 }

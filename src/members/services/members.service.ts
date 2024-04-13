@@ -83,7 +83,7 @@ export class MembersService {
   }
 
   /* Validate Member */
-  async validateMember(roomId: string, userId: number): Promise<void> {
+  async validateMember(roomId: string, userId: string): Promise<void> {
     // 멤버 정보 조회
     const member = await this.prismaService.members.findFirst({
       where: { userId, roomId },
