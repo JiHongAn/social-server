@@ -5,10 +5,12 @@ import { DynamooseModule } from 'nestjs-dynamoose';
 import { ChatEntity } from './entities/chat.entity';
 import { ChatsGateway } from './gateways/chats.gateway';
 import { AuthModule } from '../auth/auth.module';
-import { RoomsModule } from '../rooms/rooms.module';
+import { MembersModule } from '../members/members.module';
 
 @Module({
   imports: [
+    AuthModule,
+    MembersModule,
     DynamooseModule.forFeature([
       {
         name: 'Chat',
@@ -16,10 +18,9 @@ import { RoomsModule } from '../rooms/rooms.module';
         options: { tableName: 'Chat' },
       },
     ]),
-    AuthModule,
-    RoomsModule,
   ],
   controllers: [ChatsController],
   providers: [ChatsService, ChatsGateway],
+  exports: [ChatsService],
 })
 export class ChatsModule {}

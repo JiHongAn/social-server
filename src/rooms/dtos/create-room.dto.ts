@@ -1,12 +1,8 @@
-import { IsEnum, IsNumber } from 'class-validator';
-import { RoomType } from '../../libs/enums/room-type.enum';
+import { IsArray } from 'class-validator';
 
 export class CreateRoomDto {
-  @IsEnum(RoomType)
-  type: string;
-
-  @IsNumber()
-  friendId: number;
+  @IsArray()
+  friendIds: number[];
 }
 
 export class CreateRoomResponseDto {
