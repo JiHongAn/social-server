@@ -170,7 +170,7 @@ export class RoomsService {
   }
 
   /* Create Private Room Id */
-  private createPrivateRoomId(userIds: number[]): string {
-    return userIds.sort((a, b) => a - b).join('-');
+  private createPrivateRoomId(userIds: string[]): string {
+    return userIds.sort().join('-');
   }
 }

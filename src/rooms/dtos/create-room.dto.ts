@@ -2,7 +2,7 @@ import { IsArray } from 'class-validator';
 
 export class CreateRoomDto {
   @IsArray()
-  friendIds: number[];
+  friendIds: string[];
 }
 
 export class CreateRoomResponseDto {

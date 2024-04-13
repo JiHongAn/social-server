@@ -22,7 +22,7 @@ model rooms {
 }
 
 model members {
-  userId     Int
+  userId     String
   roomId     String
   lastChatId Int    @default(0)
   rooms      rooms  @relation(fields: [roomId], references: [id])

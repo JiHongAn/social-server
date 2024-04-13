@@ -163,7 +163,7 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   /* 마지막으로 조회한 채팅 ID 업데이트 */
   private async updateMemberLastChatId(
     roomId: string,
-    userId: number,
+    userId: string,
   ): Promise<void> {
     const lastChatId = await this.getRoomLastChatId(roomId);
 
