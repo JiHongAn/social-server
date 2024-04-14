@@ -4,7 +4,8 @@ export interface ChatKey {
 
 export interface Chat extends ChatKey {
   SK: number;
-  userId: number;
+  type: string;
+  userId: string;
   message: string;
   createdAt: Date;
 }

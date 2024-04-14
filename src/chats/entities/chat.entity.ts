@@ -9,8 +9,11 @@ export const ChatEntity = new Schema({
     type: Number,
     rangeKey: true,
   },
+  type: {
+    type: String,
+  },
   userId: {
-    type: Number,
+    type: String,
   },
   message: {
     type: String,

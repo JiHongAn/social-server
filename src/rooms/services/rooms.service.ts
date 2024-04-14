@@ -100,6 +100,10 @@ export class RoomsService {
       },
     });
 
+    if (!room) {
+      throw errors.InvalidRequest();
+    }
+
     // 나의 멤버 정보
     const myMember = await this.prismaService.members.findFirst({
       where: { userId: id, roomId },
@@ -148,7 +152,7 @@ export class RoomsService {
 
     // 이미 채팅방이 존재한다면
     if (room) {
-      throw errors.InvalidRequest();
+      return { roomId };
     }
 
     // 채팅방 생성 트랜잭션

@@ -39,8 +39,8 @@ export class ChatsService {
     }
     const chats = await query.exec();
     return chats
-      .map(({ userId, message, createdAt }) => {
-        return { userId, message, createdAt };
+      .map(({ userId, type, message, createdAt }) => {
+        return { type, userId, message, createdAt };
       })
       .reverse();
   }
@@ -67,10 +67,11 @@ export class ChatsService {
 
   /* 채팅 생성 */
   async createChat({
+    roomId,
     chatId,
+    type,
     message,
     userId,
-    roomId,
     createdAt,
   }: CreateChatDto): Promise<void> {
     // 채팅 데이터 저장
@@ -78,6 +79,7 @@ export class ChatsService {
       PK: roomId,
       SK: chatId,
       userId,
+      type,
       message,
       createdAt,
     });
