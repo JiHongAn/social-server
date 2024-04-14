@@ -121,6 +121,7 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     await this.chatsService.createChat({
       roomId,
       chatId,
+      type: 'Message',
       userId: user.id,
       message,
       createdAt: sendTime,
@@ -143,8 +144,6 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const messageData = {
         roomId,
         userId: user.id,
-        nickname: user.nickname,
-        profileUrl: user.profileUrl,
         message,
         createdAt: sendTime,
       };

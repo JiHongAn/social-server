@@ -7,7 +7,8 @@ export class GetChatDto extends PaginationDto {
 }
 
 export class GetChatResponseDto {
-  userId: number;
+  type: string;
+  userId: string;
   message: string;
   createdAt: Date;
 }

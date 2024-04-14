@@ -1,7 +1,8 @@
 export class CreateChatDto {
-  chatId: number;
-  message: string;
-  userId: any;
   roomId: string;
+  chatId: number;
+  userId: string;
+  type: string;
+  message: string;
   createdAt: Date;
 }
