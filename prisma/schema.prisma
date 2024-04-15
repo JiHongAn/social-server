@@ -30,3 +30,14 @@ model members {
   @@id([userId, roomId])
   @@map("member")
 }
+
+model friends {
+  userId    String
+  friendId  String
+  isFriend  Boolean
+  createdAt DateTime @default(now())
+
+  @@id([userId, friendId])
+  @@index([userId, isFriend])
+  @@map("friend")
+}
