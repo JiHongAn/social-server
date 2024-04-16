@@ -8,12 +8,12 @@ datasource db {
 }
 
 model rooms {
-  id          String    @id
-  type        String
-  title       String?
+  id          String    @id @db.VarChar(20)
+  type        String    @db.VarChar(10)
+  title       String?   @db.VarChar(20)
   lastChatId  Int       @default(0)
   memberCount Int
-  updatedAt   String
+  updatedAt   String    @db.VarChar(20)
   createdAt   DateTime  @default(now())
   members     members[]
 
@@ -22,22 +22,58 @@ model rooms {
 }
 
 model members {
-  userId     String
-  roomId     String
+  userId     String @db.VarChar(12)
+  roomId     String @db.VarChar(20)
   lastChatId Int    @default(0)
-  rooms      rooms  @relation(fields: [roomId], references: [id])
+  rooms      rooms  @relation(fields: [roomId], references: [id], onDelete: Cascade)
 
   @@id([userId, roomId])
   @@map("member")
 }
 
 model friends {
-  userId    String
-  friendId  String
+  userId    String   @db.VarChar(12)
+  friendId  String   @db.VarChar(12)
   isFriend  Boolean
   createdAt DateTime @default(now())
 
   @@id([userId, friendId])
   @@index([userId, isFriend])
   @@map("friend")
+}
+
+model stories {
+  id           Int        @id @default(autoincrement())
+  userId       String     @db.VarChar(12)
+  imageUrl     String     @db.VarChar(200)
+  content      String     @db.VarChar(200)
+  likeCount    Int        @default(0)
+  commentCount Int        @default(0)
+  createdAt    DateTime   @default(now())
+  likes        likes[]
+  comments     comments[]
+
+  @@map("story")
+}
+
+model likes {
+  storyId   Int
+  userId    String   @db.VarChar(12)
+  createdAt DateTime @default(now())
+  stories   stories  @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@id([storyId, userId])
+  @@map("like")
+}
+
+model comments {
+  id        Int      @id @default(autoincrement())
+  storyId   Int
+  userId    String   @db.VarChar(12)
+  content   String   @db.VarChar(200)
+  createdAt DateTime @default(now())
+  stories   stories  @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@index([storyId, id])
+  @@map("comment")
 }

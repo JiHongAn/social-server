@@ -7,7 +7,7 @@ import { RedisModule } from '@nestjs-modules/ioredis';
   imports: [
     RedisModule.forRoot({
       type: 'single',
-      url: `redis://localhost:6379`,
+      url: `redis://${process.env.REDIS_HOST}:6379`,
     }),
   ],
   providers: [CacheService],
