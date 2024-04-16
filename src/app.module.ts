@@ -8,6 +8,7 @@ import { CacheModule } from './cache/cache.module';
 import { DynamooseModule } from 'nestjs-dynamoose';
 import { MembersModule } from './members/members.module';
 import { FriendsModule } from './friends/friends.module';
+import { StoriesModule } from './stories/stories.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { FriendsModule } from './friends/friends.module';
     CacheModule,
     MembersModule,
     FriendsModule,
+    StoriesModule,
   ],
   controllers: [AppController],
 })

@@ -4,7 +4,7 @@ import { createAdapter } from 'socket.io-redis';
 import Redis from 'ioredis';
 
 const pubClient = new Redis({
-  host: 'localhost',
+  host: process.env.REDIS_HOST,
   port: 6379,
 });
 const subClient = pubClient.duplicate();
