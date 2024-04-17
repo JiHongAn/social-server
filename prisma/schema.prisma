@@ -8,7 +8,7 @@ datasource db {
 }
 
 model rooms {
-  id          String    @id @db.VarChar(20)
+  id          String    @id @db.VarChar(100)
   type        String    @db.VarChar(10)
   title       String?   @db.VarChar(20)
   lastChatId  Int       @default(0)
@@ -23,7 +23,7 @@ model rooms {
 
 model members {
   userId         String @db.VarChar(12)
-  roomId         String @db.VarChar(20)
+  roomId         String @db.VarChar(100)
   lastReadChatId Int    @default(0)
   rooms          rooms  @relation(fields: [roomId], references: [id], onDelete: Cascade)
 
@@ -32,10 +32,11 @@ model members {
 }
 
 model friends {
-  userId    String   @db.VarChar(12)
-  friendId  String   @db.VarChar(12)
-  isFriend  Boolean
-  createdAt DateTime @default(now())
+  userId          String   @db.VarChar(12)
+  friendId        String   @db.VarChar(12)
+  isFriend        Boolean
+  lastReadStoryId Int      @default(0)
+  createdAt       DateTime @default(now())
 
   @@id([userId, friendId])
   @@index([userId, isFriend])

@@ -1,3 +1,3 @@
 export class SuccessDto {
-  success: true;
+  success: boolean;
 }

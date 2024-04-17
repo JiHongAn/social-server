@@ -28,4 +28,12 @@ export class CacheService {
   async smembers(key: string): Promise<string[]> {
     return this.redis.smembers(key);
   }
+
+  async sadd(key: string, members: string[]): Promise<number> {
+    return this.redis.sadd(key, ...members);
+  }
+
+  async expire(key: string, seconds: number): Promise<number> {
+    return this.redis.expire(key, seconds);
+  }
 }

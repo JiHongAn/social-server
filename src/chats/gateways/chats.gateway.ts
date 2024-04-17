@@ -189,6 +189,7 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     // 캐싱
     await this.cacheService.set(`chat:id:${roomId}`, room.lastChatId);
+    await this.cacheService.expire(`chat:id:${roomId}`, 3600);
     return room.lastChatId;
   }
 
@@ -205,6 +206,11 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       where: { roomId },
       select: { userId: true },
     });
-    return members.map(({ userId }) => userId.toString());
+    const userIds = members.map(({ userId }) => userId.toString());
+
+    // 멤버 정보 캐싱
+    await this.cacheService.sadd(`members:${roomId}`, userIds);
+    await this.cacheService.expire(`members:${roomId}`, 3600);
+    return userIds;
   }
 }

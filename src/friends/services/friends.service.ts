@@ -16,6 +16,8 @@ import {
   GetFriendStoryResponseDto,
 } from '../dtos/get-friend-stories.dto';
 import { Prisma } from '@prisma/client';
+import { GetFriendRequestResponseDto } from '../dtos/get-friend-request.dto';
+import { UpdateFriendStoryDto } from '../dtos/update-friend-story.dto';
 
 @Injectable()
 export class FriendsService {
@@ -30,7 +32,9 @@ export class FriendsService {
   ): Promise<GetFriendResponseDto> {
     const friends = await this.prismaService.friends.findMany({
       where: { userId: id, isFriend: true },
-      select: { friendId: true },
+      select: {
+        friendId: true,
+      },
       orderBy: { friendId: 'desc' },
       skip: nextPageToken ? 1 : 0,
       ...(nextPageToken && {
@@ -83,24 +87,54 @@ export class FriendsService {
     viewStartAt.setUTCDate(viewStartAt.getUTCDate() - 1);
 
     // 스토리를 업로드한 친구 목록 조회
-    return this.prismaService.$queryRaw<
-      { userId: string; lastStoryId: number }[]
-    >`SELECT story.userId, MAX(story.id) AS lastStoryId
+    const stories = await this.prismaService.$queryRaw<
+      { userId: string; lastStoryId: string; unread: string }[]
+    >`SELECT story.userId,
+             CAST(MAX(story.id) AS CHAR)                                    AS lastStoryId,
+             CAST(MAX(IF(story.id > friend.lastReadStoryId, 1, 0)) AS CHAR) AS unread
       FROM story
                INNER JOIN friend ON story.userId = friend.friendId
       WHERE friend.userId = ${id}
-        AND friend.isFriend = TRUE
-        AND story.createdAt >= ${viewStartAt}
-      ${nextPageToken ? Prisma.sql`AND story.id < ${+nextPageToken}` : Prisma.empty}
+        AND friend.isFriend = true
+        AND story.createdAt >= ${viewStartAt} 
+          ${nextPageToken ? Prisma.sql`AND story.id < ${+nextPageToken}` : Prisma.empty}
       GROUP BY story.userId
-      ORDER BY MAX(story.id) DESC
-          LIMIT ${limit};`;
+      ORDER BY unread DESC, lastStoryId DESC LIMIT ${limit};`;
+
+    return stories.map(({ userId, lastStoryId, unread }) => {
+      return { userId, lastStoryId: +lastStoryId, unread: +unread === 1 };
+    });
+  }
+
+  /**
+   * Update Friend Stories
+   */
+  async updateFriendStories(
+    { id }: UserDto,
+    { friendId, lastReadStoryId }: UpdateFriendStoryDto,
+  ): Promise<SuccessDto> {
+    // 친구 여부 체크
+    const friend = await this.prismaService.friends.findFirst({
+      where: { userId: id, friendId, isFriend: true },
+      select: { lastReadStoryId: true },
+    });
+    if (!friend || lastReadStoryId <= friend.lastReadStoryId) {
+      return { success: false };
+    }
+
+    await this.prismaService.friends.updateMany({
+      where: { userId: id, friendId, isFriend: true },
+      data: { lastReadStoryId },
+    });
+    return { success: true };
   }
 
   /**
    * Get Friend Requests
    */
-  async getFriendRequests({ id }: UserDto): Promise<GetFriendResponseDto> {
+  async getFriendRequests({
+    id,
+  }: UserDto): Promise<GetFriendRequestResponseDto> {
     const friendRequests = await this.prismaService.friends.findMany({
       where: { userId: id, isFriend: false },
       select: { friendId: true },
