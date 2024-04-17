@@ -1,7 +1,9 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  Param,
   Patch,
   Post,
   Query,
@@ -90,5 +92,14 @@ export class FriendsController {
     @Body() params: AcceptRequestDto,
   ): Promise<SuccessDto> {
     return this.friendsService.friendRequestAccept(user, params);
+  }
+
+  @Delete(':friendId')
+  @UseGuards(JwtGuard)
+  async deleteFriend(
+    @GetUser() user: UserDto,
+    @Param('friendId') friendId: string,
+  ): Promise<SuccessDto> {
+    return this.friendsService.deleteFriend(user, friendId);
   }
 }

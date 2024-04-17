@@ -198,4 +198,32 @@ export class FriendsService {
     });
     return { success: true };
   }
+
+  /**
+   * Delete Friend
+   */
+  async deleteFriend({ id }: UserDto, friendId: string): Promise<SuccessDto> {
+    // 친구 여부 확인
+    const friend = await this.prismaService.friends.findFirst({
+      where: { userId: id, friendId, isFriend: true },
+    });
+    if (!friend) {
+      throw errors.InvalidRequest();
+    }
+
+    // 친구 삭제
+    await this.prismaService.$transaction(async (prisma) => {
+      await prisma.friends.delete({
+        where: {
+          userId_friendId: { userId: id, friendId },
+        },
+      });
+      await prisma.friends.delete({
+        where: {
+          userId_friendId: { userId: friendId, friendId: id },
+        },
+      });
+    });
+    return { success: true };
+  }
 }
