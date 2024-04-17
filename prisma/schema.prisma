@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model rooms {
+  id          String    @id @db.VarChar(100)
+  type        String    @db.VarChar(10)
+  title       String?   @db.VarChar(20)
+  lastChatId  Int       @default(0)
+  memberCount Int
+  updatedAt   String    @db.VarChar(20)
+  createdAt   DateTime  @default(now())
+  members     members[]
+
+  @@index([updatedAt])
+  @@map("room")
+}
+
+model members {
+  userId         String @db.VarChar(12)
+  roomId         String @db.VarChar(100)
+  lastReadChatId Int    @default(0)
+  rooms          rooms  @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roomId])
+  @@map("member")
+}
+
+model friends {
+  userId          String   @db.VarChar(12)
+  friendId        String   @db.VarChar(12)
+  isFriend        Boolean
+  lastReadStoryId Int      @default(0)
+  createdAt       DateTime @default(now())
+
+  @@id([userId, friendId])
+  @@index([userId, isFriend])
+  @@map("friend")
+}
+
+model stories {
+  id        Int      @id @default(autoincrement())
+  userId    String   @db.VarChar(12)
+  imageUrl  String   @db.VarChar(200)
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@map("story")
+}
