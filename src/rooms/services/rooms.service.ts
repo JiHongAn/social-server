@@ -68,7 +68,7 @@ export class RoomsService {
       });
 
       // 나의 멤버 정보
-      const { lastChatId } = myMembers.find(({ roomId }) => {
+      const { lastReadChatId } = myMembers.find(({ roomId }) => {
         return roomId === room.id;
       });
       return {
@@ -76,7 +76,7 @@ export class RoomsService {
         type: room.type,
         memberCount: room.memberCount,
         updatedAt: room.updatedAt,
-        unread: room.lastChatId - lastChatId,
+        unread: room.lastChatId - lastReadChatId,
         lastMessage: message,
         memberUserIds: room.members.map(({ userId }) => userId),
       };
@@ -118,7 +118,7 @@ export class RoomsService {
       type: room.type,
       memberCount: room.memberCount,
       updatedAt: room.updatedAt,
-      unread: room.lastChatId - myMember.lastChatId,
+      unread: room.lastChatId - myMember.lastReadChatId,
       lastMessage: lastChats[0]?.message,
       memberUserIds: room.members.map(({ userId }) => userId),
     };
