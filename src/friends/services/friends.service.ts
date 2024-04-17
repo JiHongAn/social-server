@@ -6,6 +6,16 @@ import { CreateRequestDto } from '../dtos/create-request.dto';
 import { SuccessDto } from '../../libs/dtos/success.dto';
 import { errors } from '../../libs/errors';
 import { AcceptRequestDto } from '../dtos/accept-request.dto';
+import {
+  GetFriendStatusDto,
+  GetFriendStatusResponseDto,
+} from '../dtos/get-friend-status.dto';
+import { FriendStatus } from '../enums/friend-status.enum';
+import {
+  GetFriendStoriesDto,
+  GetFriendStoryResponseDto,
+} from '../dtos/get-friend-stories.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class FriendsService {
@@ -29,6 +39,62 @@ export class FriendsService {
       take: limit,
     });
     return { friendIds: friends.map(({ friendId }) => friendId) };
+  }
+
+  /**
+   * Get Friend Status
+   */
+  async getFriendStatus(
+    { id }: UserDto,
+    { friendId }: GetFriendStatusDto,
+  ): Promise<GetFriendStatusResponseDto> {
+    const friend = await this.prismaService.friends.findFirst({
+      where: {
+        OR: [
+          { userId: id, friendId },
+          { userId: friendId, friendId: id },
+        ],
+      },
+    });
+
+    // 친구 상태
+    let status: FriendStatus;
+    if (!friend) {
+      status = FriendStatus.None;
+    } else if (friend.isFriend) {
+      status = FriendStatus.Friend;
+    } else if (friend.userId === id) {
+      status = FriendStatus.NotAccept;
+    } else {
+      status = FriendStatus.Send;
+    }
+    return { status };
+  }
+
+  /**
+   * Get Friend Stories
+   */
+  async getFriendStories(
+    { id }: UserDto,
+    { limit, nextPageToken }: GetFriendStoriesDto,
+  ): Promise<GetFriendStoryResponseDto[]> {
+    // 조회 시작 시점
+    const viewStartAt = new Date();
+    viewStartAt.setUTCDate(viewStartAt.getUTCDate() - 1);
+
+    // 스토리를 업로드한 친구 목록 조회
+    return this.prismaService.$queryRaw<
+      { userId: string; lastStoryId: number }[]
+    >`SELECT story.userId, MAX(story.id) AS lastStoryId
+      FROM story
+               INNER JOIN friend ON story.userId = friend.friendId
+      WHERE friend.userId = ${id}
+        AND friend.isFriend = TRUE
+        AND story.createdAt >= ${viewStartAt}
+      ${nextPageToken ? Prisma.sql`AND story.id < ${+nextPageToken}` : Prisma.empty}
+      GROUP BY story.userId
+      ORDER BY MAX(story.id) DESC
+          LIMIT ${limit};`;
   }
 
   /**

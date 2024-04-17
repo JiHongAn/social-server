@@ -7,6 +7,14 @@ import { GetFriendDto, GetFriendResponseDto } from '../dtos/get-friend.dto';
 import { SuccessDto } from '../../libs/dtos/success.dto';
 import { CreateRequestDto } from '../dtos/create-request.dto';
 import { AcceptRequestDto } from '../dtos/accept-request.dto';
+import {
+  GetFriendStatusDto,
+  GetFriendStatusResponseDto,
+} from '../dtos/get-friend-status.dto';
+import {
+  GetFriendStoriesDto,
+  GetFriendStoryResponseDto,
+} from '../dtos/get-friend-stories.dto';
 
 @Controller('friends')
 export class FriendsController {
@@ -19,6 +27,24 @@ export class FriendsController {
     @Query() params: GetFriendDto,
   ): Promise<GetFriendResponseDto> {
     return this.friendsService.getFriends(user, params);
+  }
+
+  @Get('status')
+  @UseGuards(JwtGuard)
+  async getFriendStatus(
+    @GetUser() user: UserDto,
+    @Query() params: GetFriendStatusDto,
+  ): Promise<GetFriendStatusResponseDto> {
+    return this.friendsService.getFriendStatus(user, params);
+  }
+
+  @Get('stories')
+  @UseGuards(JwtGuard)
+  async getFriendStories(
+    @GetUser() user: UserDto,
+    @Query() params: GetFriendStoriesDto,
+  ): Promise<GetFriendStoryResponseDto[]> {
+    return this.friendsService.getFriendStories(user, params);
   }
 
   @Get('requests')
