@@ -43,37 +43,11 @@ model friends {
 }
 
 model stories {
-  id           Int        @id @default(autoincrement())
-  userId       String     @db.VarChar(12)
-  imageUrl     String     @db.VarChar(200)
-  content      String     @db.VarChar(200)
-  likeCount    Int        @default(0)
-  commentCount Int        @default(0)
-  createdAt    DateTime   @default(now())
-  likes        likes[]
-  comments     comments[]
-
-  @@map("story")
-}
-
-model likes {
-  storyId   Int
-  userId    String   @db.VarChar(12)
-  createdAt DateTime @default(now())
-  stories   stories  @relation(fields: [storyId], references: [id], onDelete: Cascade)
-
-  @@id([storyId, userId])
-  @@map("like")
-}
-
-model comments {
   id        Int      @id @default(autoincrement())
-  storyId   Int
   userId    String   @db.VarChar(12)
-  content   String   @db.VarChar(200)
+  imageUrl  String   @db.VarChar(200)
   createdAt DateTime @default(now())
-  stories   stories  @relation(fields: [storyId], references: [id], onDelete: Cascade)
 
-  @@index([storyId, id])
-  @@map("comment")
+  @@index([userId, createdAt])
+  @@map("story")
 }
