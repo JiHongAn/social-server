@@ -20,12 +20,14 @@ export class StoriesService {
     { id }: UserDto,
     { friendId }: GetStoryDto,
   ): Promise<GetStoryResponseDto[]> {
-    // 친구 여부 확인
-    const friend = await this.prismaService.friends.findFirst({
-      where: { userId: id, friendId, isFriend: true },
-    });
-    if (!friend) {
-      throw errors.NoPermission();
+    if (friendId !== id) {
+      // 친구 여부 확인
+      const friend = await this.prismaService.friends.findFirst({
+        where: { userId: id, friendId, isFriend: true },
+      });
+      if (!friend) {
+        throw errors.NoPermission();
+      }
     }
 
     // 조회 시작 시점
@@ -38,6 +40,7 @@ export class StoriesService {
         userId: friendId,
         createdAt: { gte: viewStartAt },
       },
+      orderBy: { id: 'asc' },
     });
   }
 

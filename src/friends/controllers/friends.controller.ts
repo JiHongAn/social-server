@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { FriendsService } from '../services/friends.service';
 import { JwtGuard } from '../../auth/guards/jwt.guard';
 import { GetUser } from '../../libs/decorators/get-user.decorator';
@@ -15,6 +23,8 @@ import {
   GetFriendStoriesDto,
   GetFriendStoryResponseDto,
 } from '../dtos/get-friend-stories.dto';
+import { GetFriendRequestResponseDto } from '../dtos/get-friend-request.dto';
+import { UpdateFriendStoryDto } from '../dtos/update-friend-story.dto';
 
 @Controller('friends')
 export class FriendsController {
@@ -47,11 +57,20 @@ export class FriendsController {
     return this.friendsService.getFriendStories(user, params);
   }
 
+  @Patch('stories')
+  @UseGuards(JwtGuard)
+  async updateFriendStories(
+    @GetUser() user: UserDto,
+    @Body() params: UpdateFriendStoryDto,
+  ): Promise<SuccessDto> {
+    return this.friendsService.updateFriendStories(user, params);
+  }
+
   @Get('requests')
   @UseGuards(JwtGuard)
   async getFriendRequests(
     @GetUser() user: UserDto,
-  ): Promise<GetFriendResponseDto> {
+  ): Promise<GetFriendRequestResponseDto> {
     return this.friendsService.getFriendRequests(user);
   }
 
