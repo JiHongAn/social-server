@@ -87,7 +87,7 @@ export class MembersService {
     // 멤버 정보 조회
     const member = await this.prismaService.members.findFirst({
       where: { userId, roomId },
-      select: { lastChatId: true },
+      select: { lastReadChatId: true },
     });
 
     // 멤버가 아니라면

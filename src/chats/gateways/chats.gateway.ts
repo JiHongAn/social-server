@@ -169,7 +169,7 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // 멤버가 읽은 마지막 채팅 ID 업데이트
     await this.prismaService.members.updateMany({
       where: { userId, roomId },
-      data: { lastChatId },
+      data: { lastReadChatId: lastChatId },
     });
   }
 

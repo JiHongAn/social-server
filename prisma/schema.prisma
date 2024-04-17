@@ -22,10 +22,10 @@ model rooms {
 }
 
 model members {
-  userId     String @db.VarChar(12)
-  roomId     String @db.VarChar(20)
-  lastChatId Int    @default(0)
-  rooms      rooms  @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  userId         String @db.VarChar(12)
+  roomId         String @db.VarChar(20)
+  lastReadChatId Int    @default(0)
+  rooms          rooms  @relation(fields: [roomId], references: [id], onDelete: Cascade)
 
   @@id([userId, roomId])
   @@map("member")
