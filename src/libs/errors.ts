@@ -17,7 +17,7 @@ export const errors = {
     return new ChoconutException(404, -4, message);
   },
   NoPermission: (message = '권한이 없습니다') => {
-    return new ChoconutException(400, -5, message);
+    return new ChoconutException(403, -5, message);
   },
   DBError: (message = '서버에서 오류가 발생했습니다') => {
     return new ChoconutException(400, -6, message);
