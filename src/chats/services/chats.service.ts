@@ -84,4 +84,16 @@ export class ChatsService {
       createdAt,
     });
   }
+
+  /* 마지막 채팅 ID 조회 */
+  async getLastChatId(roomId: string): Promise<number> {
+    const chats = await this.chatModel
+      .query('PK')
+      .eq(roomId)
+      .limit(1)
+      .sort(SortOrder.descending)
+      .exec();
+    console.log();
+    return chats[0]?.SK ?? 0;
+  }
 }

@@ -13,8 +13,16 @@ export class CacheService {
     return this.redis.get(key);
   }
 
-  async set(key: string, value: string | number): Promise<'OK'> {
-    return this.redis.set(key, value);
+  async set(
+    key: string,
+    value: string | number,
+    milliseconds?: number,
+  ): Promise<'OK'> {
+    if (milliseconds) {
+      return this.redis.set(key, value, 'PX', milliseconds);
+    } else {
+      return this.redis.set(key, value);
+    }
   }
 
   async incrby(key: string, increment: number): Promise<number> {
@@ -33,7 +41,15 @@ export class CacheService {
     return this.redis.sadd(key, ...members);
   }
 
+  async srem(key: string, member: string): Promise<number> {
+    return this.redis.srem(key, member);
+  }
+
   async expire(key: string, seconds: number): Promise<number> {
     return this.redis.expire(key, seconds);
+  }
+
+  async exists(key: string): Promise<number> {
+    return this.redis.exists(key);
   }
 }
