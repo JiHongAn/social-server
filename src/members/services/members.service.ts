@@ -80,7 +80,7 @@ export class MembersService {
     });
 
     // 멤버 캐싱
-    const isMemberCached = await this.cacheService.exist(`members:${roomId}`);
+    const isMemberCached = await this.cacheService.exists(`members:${roomId}`);
     if (isMemberCached) {
       await this.cacheService.sadd(`members:${roomId}`, [id]);
     }
@@ -121,7 +121,7 @@ export class MembersService {
     });
 
     // 멤버 캐싱 삭제
-    const isMemberCached = await this.cacheService.exist(`members:${roomId}`);
+    const isMemberCached = await this.cacheService.exists(`members:${roomId}`);
     if (isMemberCached) {
       await this.cacheService.srem(`members:${roomId}`, id);
     }
