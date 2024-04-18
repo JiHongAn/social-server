@@ -41,6 +41,10 @@ export class CacheService {
     return this.redis.sadd(key, ...members);
   }
 
+  async srem(key: string, member: string): Promise<number> {
+    return this.redis.srem(key, member);
+  }
+
   async expire(key: string, seconds: number): Promise<number> {
     return this.redis.expire(key, seconds);
   }
