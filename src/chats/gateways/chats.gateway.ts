@@ -167,7 +167,7 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
 
     // Lock 걸기
-    await this.cacheService.set(`room:lock:${roomId}`, 'Y', 200);
+    await this.cacheService.set(`room:lock:${roomId}`, 'Y', 100);
   }
 
   /* 마지막으로 조회한 채팅 ID 업데이트 */
