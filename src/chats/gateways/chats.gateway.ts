@@ -73,13 +73,6 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() { roomId }: { roomId: string },
   ): Promise<void> {
-    const chatId = await this.cacheService.get(`chat:id:${roomId}`);
-
-    // 캐싱된 Chat Id가 없다면
-    if (!chatId) {
-      await this.getRoomLastChatId(roomId);
-    }
-
     // Client Id 저장
     client.data.roomId = roomId;
   }
@@ -112,7 +105,7 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const user = client.data.user;
 
     // Chat Id 조회
-    const chatId = await this.cacheService.incrby(`chat:id:${roomId}`, 1);
+    const chatId = await this.getNextChatId(roomId);
 
     // 전송 시간
     const sendTime = new Date();
@@ -127,11 +120,8 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       createdAt: sendTime,
     });
 
-    // 마지막 전송 시간 업데이트
-    await this.prismaService.rooms.updateMany({
-      where: { id: roomId },
-      data: { lastChatId: chatId, updatedAt: sendTime.getTime().toString() },
-    });
+    // 채팅방 업데이트
+    await this.updateRoom(roomId, sendTime.getTime().toString());
 
     // 채팅방 멤버 목록 조회
     const members = await this.getMemberUserIds(roomId);
@@ -159,12 +149,33 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     await Promise.allSettled(promises);
   }
 
+  /* 채팅방 업데이트 */
+  private async updateRoom(roomId: string, updatedAt: string): Promise<void> {
+    // Lock 여부 확인
+    const isLocked = await this.cacheService.get(`room:lock:${roomId}`);
+    if (isLocked) {
+      return;
+    }
+
+    // 마지막 채팅 ID
+    const chatId = await this.getLastChatId(roomId);
+
+    // 채팅방 업데이트
+    await this.prismaService.rooms.updateMany({
+      where: { id: roomId },
+      data: { lastChatId: chatId, updatedAt },
+    });
+
+    // Lock 걸기
+    await this.cacheService.set(`room:lock:${roomId}`, 'Y', 200);
+  }
+
   /* 마지막으로 조회한 채팅 ID 업데이트 */
   private async updateMemberLastChatId(
     roomId: string,
     userId: string,
   ): Promise<void> {
-    const lastChatId = await this.getRoomLastChatId(roomId);
+    const lastChatId = await this.getLastChatId(roomId);
 
     // 멤버가 읽은 마지막 채팅 ID 업데이트
     await this.prismaService.members.updateMany({
@@ -173,24 +184,33 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
   }
 
-  /* 채팅방의 마지막 Chat Id 조회 */
-  private async getRoomLastChatId(roomId: string): Promise<number> {
-    // 캐싱된 lastChatId 리턴
-    const lastChatId = await this.cacheService.get(`chat:id:${roomId}`);
-    if (lastChatId) {
-      return +lastChatId;
+  /* 다음 채팅 ID 조회 */
+  private async getLastChatId(roomId: string): Promise<number> {
+    // 만약 캐싱되어 있는 경우
+    const cachedLastChatId = await this.cacheService.get(`chat:id:${roomId}`);
+    if (cachedLastChatId) {
+      return +cachedLastChatId;
     }
 
-    // DB에서 조회
-    const room = await this.prismaService.rooms.findUnique({
-      where: { id: roomId },
-      select: { lastChatId: true },
-    });
+    // 캐싱되어 있지 않은 경우 DynamoDB에서 조회
+    const lastChatId = await this.chatsService.getLastChatId(roomId);
 
-    // 캐싱
-    await this.cacheService.set(`chat:id:${roomId}`, room.lastChatId);
+    // 마지막 채팅 ID 캐싱
+    await this.cacheService.set(`chat:id:${roomId}`, lastChatId);
+
+    // TTL 적용
     await this.cacheService.expire(`chat:id:${roomId}`, 3600);
-    return room.lastChatId;
+    return lastChatId;
+  }
+
+  private async getNextChatId(roomId: string): Promise<number> {
+    const isChatIdCached = await this.cacheService.exists(`chat:id:${roomId}`);
+
+    // 캐싱되어 있지 않다면 캐싱
+    if (!isChatIdCached) {
+      await this.getLastChatId(roomId);
+    }
+    return this.cacheService.incrby(`chat:id:${roomId}`, 1);
   }
 
   /* 멤버들의 user ID 목록 조회 */
