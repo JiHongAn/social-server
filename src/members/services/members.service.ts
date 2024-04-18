@@ -6,10 +6,14 @@ import { errors } from '../../libs/errors';
 import { PrismaService } from '../../prisma/services/prisma.service';
 import { RoomType } from '../../libs/enums/room-type.enum';
 import { GetMemberDto, GetMemberResponseDto } from '../dtos/get-member.dto';
+import { CacheService } from '../../cache/services/cache.service';
 
 @Injectable()
 export class MembersService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly cacheService: CacheService,
+  ) {}
 
   /**
    * Get Members
@@ -74,6 +78,12 @@ export class MembersService {
         data: { roomId, userId: friendId },
       });
     });
+
+    // 멤버 캐싱
+    const isMemberCached = await this.cacheService.exist(`members:${roomId}`);
+    if (isMemberCached) {
+      await this.cacheService.sadd(`members:${roomId}`, [id]);
+    }
     return { success: true };
   }
 
@@ -109,6 +119,12 @@ export class MembersService {
         });
       }
     });
+
+    // 멤버 캐싱 삭제
+    const isMemberCached = await this.cacheService.exist(`members:${roomId}`);
+    if (isMemberCached) {
+      await this.cacheService.srem(`members:${roomId}`, id);
+    }
     return { success: true };
   }
 
