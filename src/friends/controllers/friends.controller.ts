@@ -37,7 +37,7 @@ export class FriendsController {
   async getFriends(
     @GetUser() user: UserDto,
     @Query() params: GetFriendDto,
-  ): Promise<GetFriendResponseDto> {
+  ): Promise<GetFriendResponseDto[]> {
     return this.friendsService.getFriends(user, params);
   }
 
