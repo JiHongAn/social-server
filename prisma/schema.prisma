@@ -38,6 +38,7 @@ model friends {
   friendId        String   @db.VarChar(12)
   isFriend        Boolean
   lastReadStoryId Int      @default(0)
+  privateRoomId   String?
   createdAt       DateTime @default(now())
 
   @@id([userId, friendId])

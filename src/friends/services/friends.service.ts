@@ -29,11 +29,13 @@ export class FriendsService {
   async getFriends(
     { id }: UserDto,
     { limit, nextPageToken }: GetFriendDto,
-  ): Promise<GetFriendResponseDto> {
-    const friends = await this.prismaService.friends.findMany({
+  ): Promise<GetFriendResponseDto[]> {
+    return this.prismaService.friends.findMany({
       where: { userId: id, isFriend: true },
       select: {
         friendId: true,
+        privateRoomId: true,
+        lastReadStoryId: true,
       },
       orderBy: { friendId: 'desc' },
       skip: nextPageToken ? 1 : 0,
@@ -42,7 +44,6 @@ export class FriendsService {
       }),
       take: limit,
     });
-    return { friendIds: friends.map(({ friendId }) => friendId) };
   }
 
   /**
@@ -88,21 +89,19 @@ export class FriendsService {
 
     // 스토리를 업로드한 친구 목록 조회
     const stories = await this.prismaService.$queryRaw<
-      { userId: string; lastStoryId: string; unread: string }[]
+      { userId: string; lastStoryId: string }[]
     >`SELECT story.userId,
-             CAST(MAX(story.id) AS CHAR)                                    AS lastStoryId,
-             CAST(MAX(IF(story.id > friend.lastReadStoryId, 1, 0)) AS CHAR) AS unread
+             CAST(MAX(story.id) AS CHAR) AS lastStoryId
       FROM story
                INNER JOIN friend ON story.userId = friend.friendId
       WHERE friend.userId = ${id}
         AND friend.isFriend = true
-        AND story.createdAt >= ${viewStartAt} 
-          ${nextPageToken ? Prisma.sql`AND story.id < ${+nextPageToken}` : Prisma.empty}
+        AND story.createdAt >= ${viewStartAt} ${nextPageToken ? Prisma.sql`AND story.id < ${+nextPageToken}` : Prisma.empty}
       GROUP BY story.userId
-      ORDER BY unread DESC, lastStoryId DESC LIMIT ${limit};`;
+      ORDER BY lastStoryId DESC LIMIT ${limit};`;
 
-    return stories.map(({ userId, lastStoryId, unread }) => {
-      return { userId, lastStoryId: +lastStoryId, unread: +unread === 1 };
+    return stories.map(({ userId, lastStoryId }) => {
+      return { userId, lastStoryId: +lastStoryId };
     });
   }
 

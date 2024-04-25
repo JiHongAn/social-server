@@ -37,12 +37,17 @@ export class ChatsService {
     if (nextPageToken) {
       query.where('SK').lt(+nextPageToken);
     }
-    const chats = await query.exec();
-    return chats
-      .map(({ userId, type, message, createdAt }) => {
-        return { type, userId, message, createdAt };
-      })
-      .reverse();
+
+    try {
+      const chats = await query.exec();
+      return chats
+        .map(({ SK, userId, type, message, createdAt }) => {
+          return { type, chatId: SK, userId, message, createdAt };
+        })
+        .reverse();
+    } catch (e) {
+      return [];
+    }
   }
 
   /* 채팅방 별 마지막 메시지 조회 */
@@ -93,7 +98,6 @@ export class ChatsService {
       .limit(1)
       .sort(SortOrder.descending)
       .exec();
-    console.log();
     return chats[0]?.SK ?? 0;
   }
 }

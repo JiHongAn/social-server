@@ -73,6 +73,12 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() { roomId }: { roomId: string },
   ): Promise<void> {
+    const user = client.data.user;
+
+    if (client.data.roomId && client.data.roomId !== roomId) {
+      await this.updateMemberLastChatId(roomId, user.id);
+    }
+
     // Client Id 저장
     client.data.roomId = roomId;
   }
@@ -133,6 +139,7 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // 메시지 데이터
       const messageData = {
         roomId,
+        chatId,
         userId: user.id,
         message,
         createdAt: sendTime,

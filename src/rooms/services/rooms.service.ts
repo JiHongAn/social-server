@@ -129,52 +129,70 @@ export class RoomsService {
    */
   async createRoom(
     { id }: UserDto,
-    { friendIds }: CreateRoomDto,
+    { friendIds, type }: CreateRoomDto,
   ): Promise<CreateRoomResponseDto> {
-    // 채팅방 ID 생성
-    let roomId: string;
-    let type: string;
-
-    // 개인 채팅인 경우
-    if (friendIds.length === 1) {
-      roomId = this.createPrivateRoomId([id, friendIds[0]]);
-      type = RoomType.private;
-    } else {
-      roomId = uuid();
-      type = RoomType.group;
+    // 개인 채팅방의 경우 친구는 1명까지
+    if (type === RoomType.private) {
+      await this.validateCreatePrivateRoom(id, friendIds);
     }
 
-    // 채팅방 존재 여부 체크
-    const room = await this.prismaService.rooms.findUnique({
-      where: { id: roomId },
-      select: { id: true },
+    // 채팅방 ID 생성
+    const roomId = uuid();
+
+    // 멤버 데이터
+    const members = friendIds.map((friendId) => {
+      return { userId: friendId, roomId };
     });
 
-    // 이미 채팅방이 존재한다면
-    if (room) {
-      return { roomId };
-    }
+    // 멤버 수
+    const memberCount = members.length + 1;
 
-    // 채팅방 생성 트랜잭션
+    // 채팅방 생성
     await this.prismaService.$transaction(async (prisma): Promise<void> => {
       // 채팅방 생성
       await prisma.rooms.createMany({
-        data: { id: roomId, type, memberCount: 2, updatedAt: `${Date.now()}` },
+        data: { id: roomId, memberCount, type, updatedAt: `${Date.now()}` },
       });
 
       // 멤버 생성
-      const data = friendIds.map((friendId) => {
-        return { userId: friendId, roomId };
-      });
       await prisma.members.createMany({
-        data: [{ userId: id, roomId }, ...data],
+        data: [{ userId: id, roomId }, ...members],
       });
+
+      // 개인 채팅의 경우 친구 정보 업데이트
+      if (type === RoomType.private) {
+        await prisma.friends.updateMany({
+          where: { userId: id, friendId: friendIds[0], isFriend: true },
+          data: { privateRoomId: roomId },
+        });
+        await prisma.friends.updateMany({
+          where: { userId: friendIds[0], friendId: id, isFriend: true },
+          data: { privateRoomId: roomId },
+        });
+      }
     });
     return { roomId };
   }
 
-  /* Create Private Room Id */
-  private createPrivateRoomId(userIds: string[]): string {
-    return userIds.sort().join('-');
+  /* 개인 채팅방 생성 가능 여부 체크 */
+  private async validateCreatePrivateRoom(
+    userId: string,
+    friendIds: string[],
+  ): Promise<void> {
+    // 친구가 2명 이상이라면
+    if (friendIds.length >= 2) {
+      throw errors.InvalidRequest();
+    }
+
+    // 개인 채팅방이 있는지 확인
+    const friend = await this.prismaService.friends.findFirst({
+      where: { userId, friendId: friendIds[0], isFriend: true },
+      select: { privateRoomId: true },
+    });
+
+    // 친구가 아니거나 개인 채팅방이 있다면
+    if (!friend || friend.privateRoomId) {
+      throw errors.InvalidRequest();
+    }
   }
 }
